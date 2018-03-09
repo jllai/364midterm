@@ -31,14 +31,6 @@ db = SQLAlchemy(app)
 ######################################
 ######## HELPER FXNS (If any) ########
 ######################################
-def get_or_create_channel(channel):
-    c = Channel.query.filter_by(name=channel).first() 
-    if not c: # If None
-        c = Channel(name=channel)
-        db.session.add(c) 
-        db.session.commit()
-    return c.id
-
 def get_channel_videos(upload_id, channel):
     channel_id = 'https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=' + upload_id + '&key=' + api_key
     results = requests.get(channel_id)
@@ -46,8 +38,6 @@ def get_channel_videos(upload_id, channel):
     video_links = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=' + json_file['items'][0]['contentDetails']['relatedPlaylists']['uploads'] + '&key=' + api_key
     results = requests.get(video_links)
     json_file = json.loads(results.text)
-    
-    # for link in json_file[]
 
     return json_file
 
@@ -61,8 +51,8 @@ class Videos(db.Model):
     link = db.Column(db.String(120))
     channel_id = db.Column(db.Integer,db.ForeignKey("channel.id"))
 
-    # def __repr__(self):
-    #     return "{} (ID: {})".format(self.title, self.id)
+    def __repr__(self):
+        return "{}".format(self.title)
 
 class Channel(db.Model):
     __tablename__ = "channel"
@@ -83,6 +73,10 @@ class SearchVideoOrChannel(FlaskForm):
     channel = StringField("What channel are you looking for?")
     submit = SubmitField('Submit')
 
+    def validate_channel(self, field):
+        if len(field.data) > 64:
+            raise ValidationError("Channel name is too long!")
+
 #######################
 ###### VIEW FXNS ######
 #######################
@@ -96,9 +90,9 @@ def page_not_found(e):
 @app.route('/', methods=['GET', 'POST'])
 def home():
     form = SearchVideoOrChannel(request.form)
+    channel_videos = []
 
     if form.validate_on_submit():
-        print('hi')
         channel = form.channel.data
         # checks if channel exists in db. If so, redirects user to 'all_channels'
         c = Channel.query.filter_by(name=channel).first() 
@@ -109,7 +103,8 @@ def home():
         else:
             flash('*** Channel already exists! ***')
             return redirect(url_for('all_channels'))
-        print('hi')
+
+        # Grabs all the info from the API
         base_url = 'https://www.googleapis.com/youtube/v3/search?type=channel&part=snippet&q=' + channel + '&key=' + api_key
         results = requests.get(base_url)
         json_file = json.loads(results.text)
@@ -123,8 +118,12 @@ def home():
             v = Videos(title = title, link = link, channel_id = c.id)
             db.session.add(v)
             db.session.commit()
-        return render_template('search_channel.html', form=form)            
-    print(form.errors)
+            tup = (title, link)
+            channel_videos.append(tup)
+
+        return render_template('search_channel.html', form=form, videos = channel_videos)
+
+    print('hellohello')
     return render_template('base.html',form=form)
 
 @app.route('/search_videos')
@@ -140,10 +139,18 @@ def search_videos():
 @app.route('/all_channels')
 def all_channels():
     channels = Channel.query.all()
-    print(channels)
     return render_template('all_channels.html', channels=channels)
 
+@app.route('/all_videos')
+def all_videos():
+    videos = Videos.query.all()
+    all_vids = []
+    for v in videos:
+        channel = Channel.query.filter_by(id = v.channel_id).first()
+        all_vids.append((v.title, channel.name, v.link))
 
+    print(all_vids)
+    return render_template('all_videos.html', videos = all_vids)
 
 ## Code to run the application...
 if __name__ == '__main__':

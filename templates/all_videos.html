@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<ul>
+
 {% for video in videos %}
-<h2><a href="{{ video[1] }}">{{ video[0] }}</a>.</div>
+	<p><a href="{{ video[1] }}">{{ video[0] }}</a> by {{ video[1] }}</p>
+
 {% endfor %}
-</ul>
 
 {% endblock %}
