@@ -1,12 +1,19 @@
+{% block content %}
 
+<form action="{{url_for('search_videos')}}" method="GET">
+    {{ form.search.label() }}{{ form.search() }}<br>
+</form>
 
-{% block content1 %}
-
-<form action="{{ url_for('home') }}" method="POST">
-    {{ form.name.label() }}{{ form.name() }}<br>
+<form method="POST">
+    {{ form.channel.label() }}{{ form.channel() }}<br>
     {{ form.submit() }}
     {{ form.hidden_tag() }}
 </form>
 
-
 {% endblock %}
+
+<ul>
+    <li><a href="{{ url_for('home')}}">Home Search.</a></li>
+    <li><a href="{{ url_for('all_channels')}}">See all channels.</a></li>
+</ul>
+

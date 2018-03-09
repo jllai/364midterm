@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<ul>
+    {% for video in videos['items'] %}
+        <li>
+        <h2>{{ video['snippet']['title'] }} by {{ video['snippet']['channelTitle'] }}</h2>
+        <div><a href="https://www.youtube.com/watch?v={{ video['id']['videoId'] }}">Link to the video</a>.</div></li>
+    {% endfor %}
+</ul
+{% endblock %}
