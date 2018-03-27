@@ -11,6 +11,7 @@ from wtforms import StringField, SubmitField # Note that you may need to import 
 from wtforms.validators import Required # Here, too
 from flask_sqlalchemy import SQLAlchemy
 import requests, json
+from flask_script import Manager, Shell
 
 ## App setup code
 app = Flask(__name__)
@@ -21,12 +22,22 @@ api_key = "AIzaSyDSRBqd8GSKyqJy_MRbw5LZwPJAxFnri-0"
 
 ## All app.config values
 app.config['SECRET_KEY'] = 'hard to guess string'
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://Jamie@localhost:5432/jllaiMidterm" # TODO: May need to change this, Windows users -- probably by adding postgres:YOURTEXTPW@localhost instead of just localhost. Or just like you did in section or lecture before! Everyone will need to have created a db with exactly this name, though.
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL') or "postgresql://Jamie@localhost:5432/jllaiMidterm" # TODO: May need to change this, Windows users -- probably by adding postgres:YOURTEXTPW@localhost instead of just localhost. Or just like you did in section or lecture before! Everyone will need to have created a db with exactly this name, though.
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['HEROKU_ON'] = os.environ.get('HEROKU')
+
 
 ## Statements for db setup (and manager setup if using Manager)
 db = SQLAlchemy(app)
+
+manager = Manager(app)
+## Set up Shell context so it's easy to use the shell to debug
+# Define function
+def make_shell_context():
+    return dict( app=app, db=db, Videos=Videos, Channel=Channel)
+# Add function use to manager
+manager.add_command("shell", Shell(make_context=make_shell_context))
 
 ######################################
 ######## HELPER FXNS (If any) ########
